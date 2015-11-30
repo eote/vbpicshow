@@ -74,7 +74,16 @@ Enum CDSXRC 'change-display-settings return codes, from winuser.h
   DISP_CHANGE_NOTUPDATED = -3
   DISP_CHANGE_BADFLAGS = -4
   DISP_CHANGE_BADPARAM = -5
-End Enum
+    End Enum
+
+    Private Sub frmPicShow_MouseClick(ByVal sender As Object, ByVal e As System.Windows.Forms.MouseEventArgs) Handles Me.MouseClick
+        If (e.Button = System.Windows.Forms.MouseButtons.Left) Then
+            btNext_Click(sender, e)
+        ElseIf (e.Button = System.Windows.Forms.MouseButtons.Right) Then
+            btPrev_Click(sender, e)
+        End If
+
+    End Sub
 
 Private Sub frmPicShow_Shown( _
     ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) _
@@ -88,11 +97,11 @@ Private Sub frmPicShow_Shown( _
 
   btLgth = btExit.Width 'store local value for sqr button size
 
-  Me.FormBorderStyle = Windows.Forms.FormBorderStyle.None
-  Me.WindowState = FormWindowState.Maximized  'had to represent a change in state,
-    ' else window did not maximize when screen resolution changed (in earlier versions)
-  intScrWd = Me.Width   'must appear after code that maximizes window
-  intScrHt = Me.Height
+        'Me.FormBorderStyle = Windows.Forms.FormBorderStyle.None
+        'Me.WindowState = FormWindowState.Normal
+        ' else window did not maximize when screen resolution changed (in earlier versions)
+        intScrWd = Me.Width   'must appear after code that maximizes window
+        intScrHt = Me.Height
 
   If fnSetSystemArgs() = False Then
     MessageBox.Show("Problem with setting display (screensaver, etc.);" & vbCrLf & _
@@ -100,9 +109,9 @@ Private Sub frmPicShow_Shown( _
     subEndMe()
   End If
 
-  Me.SetStyle(ControlStyles.AllPaintingInWmPaint Or _
-    ControlStyles.UserPaint Or _
-    ControlStyles.OptimizedDoubleBuffer, True)
+        Me.SetStyle(ControlStyles.AllPaintingInWmPaint Or _
+          ControlStyles.UserPaint Or _
+          ControlStyles.OptimizedDoubleBuffer, True)
 
   'Retrieve Buffered-Graphics Context for current application domain
   BGContext = BufferedGraphicsManager.Current
@@ -619,16 +628,16 @@ Private Sub frmPicShow_KeyDown(ByVal eventSender As System.Object, ByVal eventAr
 End Sub
 
 Private Sub img1_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs)
-  frmPicShow_Click(Me, New System.EventArgs()) 'treat mouse-click in image same as in form
+        btNext_Click(eventSender, eventArgs)
 End Sub
 
-Private Sub frmPicShow_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Click
-  If boManual Then
-    btNext_Click(btNext, New System.EventArgs())
-  Else
-    subEndMe() 'restore mouse pointer, terminate the app
-  End If
-End Sub
+    'Private Sub frmPicShow_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Click
+    '        'If boManual Then
+    '        btNext_Click(btNext, New System.EventArgs())
+    '        'Else
+    '        'subEndMe() 'restore mouse pointer, terminate the app
+    '        'End If
+    'End Sub
 
 Public Sub subEndMe()
   Dim intParam As Integer
@@ -820,7 +829,7 @@ Public Sub subManualMode(ByVal boManl As Boolean)
   Else 'if running on automatic timer,
     boManual = False 'set manual switch off
     timrPShow.Enabled = True 'let timer run
-    Windows.Forms.Cursor.Hide()
+            'Windows.Forms.Cursor.Hide()
     btExit.Visible = False 'all buttons hidden
     btExit.Enabled = False '  and disabled
     btNext.Visible = False
@@ -836,7 +845,7 @@ End Sub
 Private Sub btPlay_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles btPlay.Click
   boFade = boFadeBase    'set immed fade request to original base request when leaving manual mode
   TickCount = 0          'reinitialize timer tick-count when leaving manual control
-  Windows.Forms.Cursor.Hide()    'because cursor didn't vanish when start in Manual and then go to Auto mode
+        'Windows.Forms.Cursor.Hide()    'because cursor didn't vanish when start in Manual and then go to Auto mode
   subManualMode(False) 'go to automatic show mode
 End Sub
 
@@ -910,5 +919,6 @@ Private Sub subidxAdvance()  'switches indixes for memory stream, image objects,
     idxNotCurr = 1
   End If
 End Sub
+
 
 End Class

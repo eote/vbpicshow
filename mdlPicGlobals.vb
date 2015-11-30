@@ -3,6 +3,7 @@ Option Explicit On
 Imports System.IO
 Imports VB = Microsoft.VisualBasic
 Imports WSH = IWshRuntimeLibrary
+Imports System.Collections.Generic
 
 Friend Structure FNameDate
   Implements IComparable
@@ -36,7 +37,7 @@ Module mdlPicGlobals  'for variables and code shared between Select and Show for
   Friend strCmdArgs As String     'command parms if any
   Friend boShoDate As Boolean = False  'display file date?
   Friend boShoComt As Boolean = False  'display file Comment?
-  Friend boManual As Boolean = False   'under manual control?
+    Friend boManual As Boolean = False   'under manual control?
   Private dirInfo As IO.DirectoryInfo
   Friend intFileCount As Integer = 0   'cumulative all-folders value; incremented by fn-BldFileArray
   Private intDirCount As Integer = 0
@@ -172,50 +173,91 @@ strTest = VB.Right(strFilename, strFilename.Length - InStrRev(strFilename, ".", 
   Else
     Return False
   End If
-End Function
+    End Function
 
-Friend Function fnBldFileArray(ByVal CurrPath As String) As Integer
-  'search path (and by default all subdirs) for image files, store in array
-  'returns cumulative all-folders # of files selected (0 is no files, error)
 
-  If Not Directory.Exists(CurrPath) Then
-    MessageBox.Show(CurrPath & vbCrLf & "folder does not exist", "Select image files from folder", _
-      MessageBoxButtons.OK, MessageBoxIcon.Error)
-    Return 0
-  End If
+    Friend Function fnReadFileList(ByVal CurrPath As String) As Integer
+        If Not File.Exists(CurrPath) Then
+            MessageBox.Show(CurrPath & vbCrLf & "file does not exist", "Select image files from folder", _
+              MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return 0
+        End If
+        Dim files As New List(Of String)
 
-  Dim collImgFilesFound As Collections.ObjectModel.ReadOnlyCollection(Of String) = _
-      My.Computer.FileSystem.GetFiles(CurrPath, ioSrchOpt, arystrImgNLinkTypes)
-  For Each strImgOrLinkFound As String In collImgFilesFound
-    Dim FSysInfo As System.IO.FileInfo = My.Computer.FileSystem.GetFileInfo(strImgOrLinkFound)
+        If fnChkImageType(CurrPath) Then
+            files.Add(CurrPath)
+        Else
+            Dim sr As IO.StreamReader = File.OpenText(CurrPath)
+            Do Until (sr.EndOfStream)
+                Dim fn As String = sr.ReadLine
+                If fnChkImageType(fn) Then
+                    files.Add(fn)
+                End If
+            Loop
+        End If
+        If files.Count > 0 Then
+            Dim iStart As Integer = aryFiles.GetUpperBound(0) + 1
+            Dim iEnd As Integer = iStart + files.Count - 1
+            ReDim Preserve aryFiles(iEnd)
+            Dim i As Integer
+            For i = iStart To iEnd
+                aryFiles(i) = files.Item(i - iStart)
+            Next
+        End If
+        Return aryFiles.GetUpperBound(0) + 1
+    End Function
+    Friend Function fnBldFileArray(ByVal CurrPath As String) As Integer
+        If Directory.Exists(CurrPath) Then
+            Return fnBldFileArray1(CurrPath)
+        ElseIf File.Exists(CurrPath) Then
+            Return fnReadFileList(CurrPath)
+        End If
+        MessageBox.Show(CurrPath & vbCrLf & "does not exist", "Select image files", _
+              MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Return 0
+    End Function
+    Friend Function fnBldFileArray1(ByVal CurrPath As String) As Integer
+        'search path (and by default all subdirs) for image files, store in array
+        'returns cumulative all-folders # of files selected (0 is no files, error)
 
-    If fnChkImageType(FSysInfo.Name) Then
-      intFileCount += 1      ' Add one to the file count, if file is an image
-      ReDim Preserve aryFiles(aryFiles.GetUpperBound(0) + 1)
-      aryFiles(aryFiles.GetUpperBound(0)) = FSysInfo.FullName
-    ElseIf (InStr(1, FSysInfo.Name, ".lnk", CompareMethod.Text) > 0) Then   'if a shortcut file:
-      Dim MyShell As New WSH.WshShell
-      Dim MyShortcut As WSH.WshShortcut
-      MyShortcut = (CType(MyShell.CreateShortcut(FSysInfo.FullName), WSH.WshShortcut))
-      If My.Computer.FileSystem.FileExists(MyShortcut.TargetPath) _
-          AndAlso fnChkImageType(MyShortcut.TargetPath) Then
-      'above line tests if target-file of shortcut exists, and if so if it's an image file. If both true, add to array
-        intFileCount += 1      ' Add one to the file count, if shortcut points to image file
-        ReDim Preserve aryFiles(aryFiles.GetUpperBound(0) + 1)
-        aryFiles(aryFiles.GetUpperBound(0)) = MyShortcut.TargetPath
-      'Debug.Print("True:   " & FSysInfo.FullName & "   " & MyShortcut.TargetPath)
-      End If
+        If Not Directory.Exists(CurrPath) Then
+            MessageBox.Show(CurrPath & vbCrLf & "folder does not exist", "Select image files from folder", _
+              MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return 0
+        End If
 
-      MyShell = Nothing           'clean up objects created above
-      MyShortcut = Nothing
-    End If
+        Dim collImgFilesFound As Collections.ObjectModel.ReadOnlyCollection(Of String) = _
+            My.Computer.FileSystem.GetFiles(CurrPath, ioSrchOpt, arystrImgNLinkTypes)
+        For Each strImgOrLinkFound As String In collImgFilesFound
+            Dim FSysInfo As System.IO.FileInfo = My.Computer.FileSystem.GetFileInfo(strImgOrLinkFound)
 
-  Next strImgOrLinkFound
+            If fnChkImageType(FSysInfo.Name) Then
+                intFileCount += 1      ' Add one to the file count, if file is an image
+                ReDim Preserve aryFiles(aryFiles.GetUpperBound(0) + 1)
+                aryFiles(aryFiles.GetUpperBound(0)) = FSysInfo.FullName
+            ElseIf (InStr(1, FSysInfo.Name, ".lnk", CompareMethod.Text) > 0) Then   'if a shortcut file:
+                Dim MyShell As New WSH.WshShell
+                Dim MyShortcut As WSH.WshShortcut
+                MyShortcut = (CType(MyShell.CreateShortcut(FSysInfo.FullName), WSH.WshShortcut))
+                If My.Computer.FileSystem.FileExists(MyShortcut.TargetPath) _
+                    AndAlso fnChkImageType(MyShortcut.TargetPath) Then
+                    'above line tests if target-file of shortcut exists, and if so if it's an image file. If both true, add to array
+                    intFileCount += 1      ' Add one to the file count, if shortcut points to image file
+                    ReDim Preserve aryFiles(aryFiles.GetUpperBound(0) + 1)
+                    aryFiles(aryFiles.GetUpperBound(0)) = MyShortcut.TargetPath
+                    'Debug.Print("True:   " & FSysInfo.FullName & "   " & MyShortcut.TargetPath)
+                End If
 
-  collImgFilesFound = Nothing    'Release the collection after array built
+                MyShell = Nothing           'clean up objects created above
+                MyShortcut = Nothing
+            End If
 
-  Return intFileCount
-End Function
+        Next strImgOrLinkFound
+
+        collImgFilesFound = Nothing    'Release the collection after array built
+
+        Return intFileCount
+    End Function
 
 Function GetImgDate(ByVal strNewFile As String) As Date
 'Takes name of image file, sets pic date; either from Exif tag or file-modified property

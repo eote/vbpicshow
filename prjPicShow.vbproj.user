@@ -27,7 +27,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
     <EnableSQLServerDebugging>false</EnableSQLServerDebugging>
     <StartAction>Project</StartAction>
-    <StartArguments>C:\TEMP\TestPix -showname -showdate -showcomment -datesort</StartArguments>
+    <StartArguments>E:\pictures.m3u8 -showname -showdate -showcomment -datesort interval=1</StartArguments>
     <StartProgram>
     </StartProgram>
     <StartURL>

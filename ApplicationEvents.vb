@@ -99,7 +99,7 @@ Sub subParseArg(ByVal PSArg As String)  'parse a single pic-show startup parm
   If InStr(1, PSArg, "-datesort", CompareMethod.Text) > 0 Then boDateSort = True 'sort file array by date
   If InStr(1, PSArg, "-manual", CompareMethod.Text) > 0 Then boManual = True 'use manual control
   If InStr(1, PSArg, "-nosubs", CompareMethod.Text) > 0 Then ioSrchOpt = FileIO.SearchOption.SearchTopLevelOnly
-  If InStr(1, PSArg, "interval=", CompareMethod.Text) > 0 Then subParseIntvl((PSArg))
+            If InStr(1, PSArg, "interval=", CompareMethod.Text) > 0 Then subParseIntvl((PSArg))
   If InStr(1, PSArg, "-fade", CompareMethod.Text) > 0 Then
       boFade = True       'want to fade between images
       boFadeBase = True
@@ -107,12 +107,12 @@ Sub subParseArg(ByVal PSArg As String)  'parse a single pic-show startup parm
   If InStr(1, PSArg, "transit=", CompareMethod.Text) > 0 Then subParseFadeTransit(PSArg)
 
   If InStr(PSArg, "\") > 0 Then            'If argument is a FQ folder path
-    If Not IO.Directory.Exists(PSArg) Then   'If folder path does not exist, error message & terminate app
-      MessageBox.Show(PSArg & vbCrLf & "folder does not exist;" & vbCrLf & "terminating PicShow application", _
-          "Select image files from folder", _
-          MessageBoxButtons.OK, MessageBoxIcon.Error)
-      End
-    End If
+                If Not (IO.File.Exists(PSArg) Or IO.Directory.Exists(PSArg)) Then   'If folder path does not exist, error message & terminate app
+                    MessageBox.Show(PSArg & vbCrLf & "path does not exist;" & vbCrLf & "terminating PicShow application", _
+                        "Select image files", _
+                        MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    End
+                End If
     intFiles = intFiles + fnBldFileArray(PSArg)   'Arg is a valid existing folder; find image files in it
     If intFiles = 0 Then 'If 0 files in folder, notify; other folders may have some
       MessageBox.Show("No image files (JPG, JPEG, GIF, BMP, PNG, TIF, TIFF) found in" _
