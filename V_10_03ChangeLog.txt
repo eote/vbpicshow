@@ -1,0 +1,11 @@
+Changes since version 9.4:
+
+- improved error handling of invalid folder name in command-line arguments
+
+- improved efficiency of retrieving metadata (date-taken, comment) from image files
+
+- enabled global (across all selected folders) sort by date; uses date-taken metadata if available, otherwise date file last modified. Formerly only sorted files to display by filename within each folder, or randomly across all folders.
+
+- removed code that called Windows API to alter screen resolution and refresh frequency; no longer needed (by me, anyway)
+
+- internal improvements such as more graceful program termination 
